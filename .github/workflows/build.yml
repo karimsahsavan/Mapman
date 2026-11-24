@@ -16,6 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract Kian Hamrah project
+        run: |
+          unzip -o Kian-Hamrah-Android-Source-v2.zip -d project
+          find project -name settings.gradle -o -name settings.gradle.kts
+
+      - name: Locate project root
+        run: |
+          PROJECT_DIR=$(find project -name settings.gradle.kts -o -name settings.gradle | head -n 1 | xargs dirname)
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -24,10 +34,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK
-        run: gradle --no-daemon assembleDebug
+        run: |
+          cd "$PROJECT_DIR"
+          gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Kian-Hamrah-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
