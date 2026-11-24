@@ -1,45 +1,35 @@
-
-name: Build Kian Hamrah APK
+name: Build Android APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
-
-permissions:
-  contents: read
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: دریافت سورس
+        uses: actions/checkout@v4
 
-      - name: Extract Kian Hamrah project
-        run: |
-          unzip -o Kiamap-Child.zip -d project
-          find project -name settings.gradle -o -name settings.gradle.kts
-
-      - name: Locate project root
-        run: |
-          PROJECT_DIR=$(find project -name settings.gradle.kts -o -name settings.gradle | head -n 1 | xargs dirname)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-      - uses: actions/setup-java@v4
+      - name: نصب Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: نصب Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Build APK
+      - name: ساخت APK
         run: |
-          cd "$PROJECT_DIR"
-          gradle --no-daemon assembleDebug
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: ذخیره فایل APK
         uses: actions/upload-artifact@v4
         with:
-          name: Kian-Hamrah-debug-apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          name: Chat-APK
+          path: app/build/outputs/apk/debug/*.apk
