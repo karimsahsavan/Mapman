@@ -18,7 +18,7 @@ jobs:
 
       - name: Extract Kian Hamrah project
         run: |
-          unzip -o Kiamap.zip -d project
+          unzip -o Kiamap-Child.zip -d project
           find project -name settings.gradle -o -name settings.gradle.kts
 
       - name: Locate project root
