@@ -43,44 +43,25 @@ jobs:
             | head -n 1)
 
           if [ -z "$PROJECT_FILE" ]; then
-            echo "ERROR: Project not found."
+            echo "ERROR: Gradle project not found."
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$PROJECT_FILE")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-          echo "Project: $PROJECT_DIR"
+          echo "Project found: $PROJECT_DIR"
 
-      - name: Accept Android SDK Licenses
-        shell: bash
-        run: |
-          set -e
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+          packages: |
+            platforms;android-34
+            build-tools;34.0.0
+            platform-tools
 
-          echo "Checking Android SDK..."
-
-          SDKMANAGER=$(command -v sdkmanager)
-
-          if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager not found."
-            exit 1
-          fi
-
-          yes | "$SDKMANAGER" --licenses || true
-
-      - name: Install Android SDK 34
-        shell: bash
-        run: |
-          set -e
-
-          SDKMANAGER=$(command -v sdkmanager)
-
-          yes | "$SDKMANAGER" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "platform-tools"
-
-      - name: Setup Gradle 8.7
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
@@ -105,11 +86,11 @@ jobs:
             -type f -name "*.apk" | head -n 1)
 
           if [ -z "$APK" ]; then
-            echo "ERROR: APK not found."
+            echo "ERROR: APK was not generated."
             exit 1
           fi
 
-          echo "APK CREATED:"
+          echo "APK successfully generated:"
           ls -lh "$APK"
 
       - name: Upload APK
