@@ -26,17 +26,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Locate project
-        shell: bash
         run: |
-          echo "Current directory:"
-          pwd
-          echo "Project files:"
+          echo "Checking project..."
           ls -la
-
           if [ ! -f settings.gradle.kts ] && [ ! -f settings.gradle ]; then
             echo "ERROR: Gradle project not found in repository root."
             find . -maxdepth 4 \( -name settings.gradle -o -name settings.gradle.kts \)
@@ -46,32 +39,14 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant execute permission
+      - name: Build Debug APK
         run: |
           if [ -f gradlew ]; then
             chmod +x gradlew
-          fi
-
-      - name: Build Debug APK
-        shell: bash
-        run: |
-          if [ -f gradlew ]; then
             ./gradlew assembleDebug --stacktrace
           else
             gradle assembleDebug --stacktrace
           fi
-
-      - name: Verify APK
-        shell: bash
-        run: |
-          APK=$(find app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1)
-
-          if [ -z "$APK" ]; then
-            echo "ERROR: APK was not generated."
-            exit 1
-          fi
-
-          echo "APK successfully generated: $APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
