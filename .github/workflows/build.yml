@@ -12,7 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # If you uploaded ShikDialer.zip (without extracting), it is unzipped automatically.
       - name: Prepare project
         run: |
           if [ -f settings.gradle.kts ]; then
@@ -28,9 +27,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
