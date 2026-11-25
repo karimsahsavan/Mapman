@@ -1,130 +1,39 @@
 
-name: ShikDialer - Build APK
+name: Build APK
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-      # 1. دریافت فایل‌های مخزن
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. نصب Java
-      - name: Setup Java 17
+      - name: Extract project
+        run: unzip -q ShikDialer.zip
+
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 3. بررسی و استخراج پروژه
-      - name: Extract ShikDialer Project
-        shell: bash
-        run: |
-          set -e
-
-          echo "Checking repository..."
-          ls -lah
-
-          if [ -f "ShikDialer.zip" ]; then
-            mkdir -p extracted
-            unzip -oq ShikDialer.zip -d extracted
-            echo "ZIP extracted successfully."
-          elif [ -f "settings.gradle.kts" ] || [ -f "settings.gradle" ]; then
-            echo "Project already exists in root."
-          else
-            echo "ERROR: ShikDialer.zip not found."
-            exit 1
-          fi
-
-      # 4. پیدا کردن پوشه اصلی پروژه
-      - name: Locate Android Project
-        shell: bash
-        run: |
-          set -e
-
-          PROJECT_FILE=$(find . -maxdepth 8 \
-            \( -name settings.gradle.kts -o -name settings.gradle \) \
-            -not -path "./.git/*" \
-            | head -n 1)
-
-          if [ -z "$PROJECT_FILE" ]; then
-            echo "ERROR: Gradle project not found."
-            find extracted -maxdepth 5 -type f || true
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$PROJECT_FILE")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-          echo "Project directory: $PROJECT_DIR"
-          ls -la "$PROJECT_DIR"
-
-          if [ ! -d "$PROJECT_DIR/app" ]; then
-            echo "ERROR: app directory not found."
-            exit 1
-          fi
-
-      # 5. آماده‌سازی Android SDK
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-
-      # 6. آماده‌سازی Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      # 7. ساخت APK
-      - name: Build Debug APK
-        shell: bash
-        run: |
-          set -e
-          cd "$PROJECT_DIR"
+      - name: Build APK
+        run: cd Kian && gradle assembleDebug --no-daemon
 
-          echo "Starting APK build..."
-
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon --stacktrace
-          else
-            gradle assembleDebug --no-daemon --stacktrace
-          fi
-
-      # 8. بررسی خروجی
-      - name: Verify APK
-        shell: bash
-        run: |
-          set -e
-
-          APK=$(find "$PROJECT_DIR/app/build/outputs/apk" \
-            -type f -name "*.apk" | head -n 1)
-
-          if [ -z "$APK" ]; then
-            echo "ERROR: APK was not generated."
-            exit 1
-          fi
-
-          echo "APK successfully generated:"
-          ls -lh "$APK"
-
-      # 9. تحویل فایل APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ShikDialer-APK
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/**/*.apk
+          name: Kian-APK
+          path: Kian/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          retention-days: 14
