@@ -18,7 +18,7 @@ jobs:
             echo "PROJECT_DIR=." >> "$GITHUB_ENV"
           else
             mkdir -p proj
-            unzip -q -o ShikDialer.zip -d proj
+            unzip -q -o ShikDialer_v7.zip -d proj
             FOUND=$(find proj -maxdepth 3 -name settings.gradle.kts | head -n 1)
             echo "PROJECT_DIR=$(dirname "$FOUND")" >> "$GITHUB_ENV"
           fi
