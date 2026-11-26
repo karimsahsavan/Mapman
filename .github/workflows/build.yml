@@ -17,9 +17,13 @@ jobs:
           if [ -f settings.gradle.kts ]; then
             echo "PROJECT_DIR=." >> "$GITHUB_ENV"
           else
+            ZIP=$(find . -maxdepth 3 -iname '*.zip' -not -path './.git/*' | head -n 1)
+            if [ -z "$ZIP" ]; then echo "No zip file found in the repo"; exit 1; fi
+            echo "Using zip: $ZIP"
             mkdir -p proj
-            unzip -q -o ShikDialer_v7.zip -d proj
+            unzip -q -o "$ZIP" -d proj
             FOUND=$(find proj -maxdepth 3 -name settings.gradle.kts | head -n 1)
+            if [ -z "$FOUND" ]; then echo "settings.gradle.kts not found in zip"; exit 1; fi
             echo "PROJECT_DIR=$(dirname "$FOUND")" >> "$GITHUB_ENV"
           fi
 
@@ -29,8 +33,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
