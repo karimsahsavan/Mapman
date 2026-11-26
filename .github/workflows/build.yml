@@ -8,24 +8,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Unzips ShikDialer.zip (or any .zip in the repo root) and finds the project folder.
       - name: Prepare project
         run: |
           if [ -f settings.gradle.kts ]; then
             echo "PROJECT_DIR=." >> "$GITHUB_ENV"
           else
-            ZIP=ShikDialer.zip
-            if [ ! -f "$ZIP" ]; then ZIP=$(ls *.zip 2>/dev/null | head -n 1); fi
-            echo "Using zip: $ZIP"
             mkdir -p proj
-            unzip -q -o "$ZIP" -d proj
+            unzip -q -o ShikDialer.zip -d proj
             FOUND=$(find proj -maxdepth 3 -name settings.gradle.kts | head -n 1)
-            if [ -z "$FOUND" ]; then echo "settings.gradle.kts not found"; exit 1; fi
             echo "PROJECT_DIR=$(dirname "$FOUND")" >> "$GITHUB_ENV"
           fi
 
@@ -38,11 +32,6 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install SDK packages
-        run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -50,11 +39,10 @@ jobs:
 
       - name: Build debug APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle assembleDebug --stacktrace --no-daemon
+        run: gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ShikDialer-debug-apk
           path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
